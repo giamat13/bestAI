@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מירוץ ה-AI · Intelligence Index</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+  :root{ --bg:#0b0f1a; --panel:#131a2b; --text:#e8edf6; --muted:#8b97ad;
+    --gpt:#10a37f; --gemini:#4285f4; --claude:#d97757; --border:#232c42; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Segoe UI',system-ui,sans-serif;
+    background:radial-gradient(circle at 20% 0%,#1a2236 0%,var(--bg) 55%);
+    color:var(--text); min-height:100vh; padding:32px 20px 60px; }
+  .wrap{ max-width:1040px; margin:0 auto; }
+  header{ text-align:center; margin-bottom:24px; }
+  h1{ font-size:clamp(1.8rem,4vw,2.6rem); font-weight:800;
+    background:linear-gradient(90deg,var(--gpt),var(--gemini),var(--claude));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+  header p{ color:var(--muted); font-size:1rem; line-height:1.7; }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:18px;
+    padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.4); margin-bottom:20px; }
+  .chart-box{ position:relative; height:430px; }
+  .legend-row{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:18px; }
+  .chip{ display:flex; align-items:center; gap:8px; background:#0e1424; border:1px solid var(--border);
+    padding:7px 15px; border-radius:999px; font-weight:600; font-size:.88rem; cursor:pointer; user-select:none; transition:opacity .2s; }
+  .chip .dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+  .chip.off{ opacity:.3; }
+  .section-title{ font-size:1.05rem; font-weight:700; margin:30px 0 14px; display:flex; align-items:center; gap:10px; }
+  .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
+  .rank-row{ display:flex; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .rank-num{ width:26px; text-align:center; color:var(--muted); font-weight:700; font-size:.85rem; flex-shrink:0; }
+  .rank-name{ width:175px; flex-shrink:0; font-weight:600; font-size:.85rem; display:flex; align-items:center; gap:7px; }
+  .rank-name .cdot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .rank-bar-track{ flex:1; background:#0e1424; border-radius:6px; height:22px; overflow:hidden; }
+  .rank-bar-fill{ height:100%; border-radius:6px; transition:width .8s ease; }
+  .rank-score{ width:46px; text-align:left; font-weight:700; font-size:.85rem; flex-shrink:0; }
+  .rank-date{ width:88px; text-align:left; color:var(--muted); font-size:.72rem; flex-shrink:0; }
+  @media(max-width:660px){ .rank-date{display:none;} .rank-name{width:120px;font-size:.76rem;} }
+  .note{ margin-top:16px; color:var(--muted); font-size:.78rem; text-align:center; line-height:1.85; }
+  .note a{ color:#4285f4; text-decoration:none; }
+  .warn{ background:#1a2238; border:1px solid #33406a; border-radius:12px; padding:14px 18px;
+    font-size:.82rem; color:#aebbd4; line-height:1.7; margin-bottom:20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>מירוץ ה-AI 🏁</h1>
+  <p>כל מודל מדורג לפי מדד אחד: <strong>Artificial Analysis Intelligence Index</strong><br>
+  מדד-על משוקלל (קידוד, מתמטיקה, מדע, סוכנים). ככל שגבוה יותר — חכם יותר.</p>
+</header>
+
+<div class="warn">
+  📌 <strong>רק ציונים מתועדים.</strong> כל מספר כאן לקוח מאותו מקור אחד (Artificial Analysis Intelligence Index,
+  צילום מ-BenchLM / מאמר AA, 13 ביוני 2026). לא הוספתי, לא שיערכתי ולא המצאתי מספרים.
+  מודל שאין לו ציון מתועד במדד הזה — פשוט לא מופיע (לכן מודלים ישנים כמו GPT-4 / Claude 3 חסרים: המדד בגרסתו הנוכחית לא מדרג אותם).
+  <br>🔒 <strong>Claude Mythos 5</strong> קיים אך מוגבל לשותפי מחקר/אבטחה, וחולק את אותם משקלים כמו Fable 5 — אין לו ציון Index מתועד נפרד, ולכן אינו בדירוג.
+</div>
+
+<div class="card">
+  <div class="chart-box"><canvas id="chart"></canvas></div>
+  <div class="legend-row">
+    <div class="chip" data-i="0"><span class="dot" style="background:var(--gpt)"></span>GPT / OpenAI</div>
+    <div class="chip" data-i="1"><span class="dot" style="background:var(--gemini)"></span>Gemini / Google</div>
+    <div class="chip" data-i="2"><span class="dot" style="background:var(--claude)"></span>Claude / Anthropic</div>
+  </div>
+</div>
+
+<div class="section-title">🏆 הדירוג המאוחד — כל המודלים יחד</div>
+<div class="card"><div id="ranking"></div></div>
+
+<p class="note">
+  מקור יחיד: <a href="https://artificialanalysis.ai/evaluations/artificial-analysis-intelligence-index" target="_blank">Artificial Analysis Intelligence Index</a>
+  · צילום ערכים: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM (13.6.2026)</a>
+  · Fable 5: <a href="https://artificialanalysis.ai/articles/claude-fable-5-mythos-intelligence-index" target="_blank">מאמר AA</a><br>
+  תאריכי ההשקה הם מידע ציבורי (לא ציונים). הציון הוא הקובע לדירוג.
+</p>
+
+</div>
+
+<script>
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+/* ════════════ DATA — Artificial Analysis Intelligence Index ════════════
+   רק ערכים מתועדים. ללא המצאות.
+   src: BenchLM 13.6.2026 / מאמר AA
+══════════════════════════════════════════════════════════════════════ */
+const FAM = {
+  gpt: { label:'GPT / OpenAI', color:css('--gpt'), pts:[
+    { x:'2024-05-13', y:17.3, m:'GPT-4o' },
+    { x:'2024-12-05', y:30.8, m:'o1' },
+    { x:'2025-04-16', y:38.4, m:'o3' },
+    { x:'2025-11-13', y:47.7, m:'GPT-5.1' },
+    { x:'2026-06-15', y:60.2, m:'GPT-5.5' },
+  ]},
+  gemini: { label:'Gemini / Google', color:css('--gemini'), pts:[
+    { x:'2024-02-15', y:16.0, m:'Gemini 1.5 Pro' },
+    { x:'2025-03-25', y:34.6, m:'Gemini 2.5 Pro' },
+    { x:'2025-11-18', y:48.4, m:'Gemini 3 Pro' },
+    { x:'2026-02-19', y:57.2, m:'Gemini 3.1 Pro' },
+    { x:'2026-05-19', y:55.0, m:'Gemini 3.5 Flash' },
+  ]},
+  claude: { label:'Claude / Anthropic', color:css('--claude'), pts:[
+    { x:'2025-11-24', y:43.1, m:'Claude Opus 4.5' },
+    { x:'2025-12-15', y:44.4, m:'Claude Sonnet 4.6' },
+    { x:'2026-01-20', y:46.5, m:'Claude Opus 4.6' },
+    { x:'2026-04-15', y:61.4, m:'Claude Opus 4.8' },
+    { x:'2026-06-09', y:64.9, m:'Claude Fable 5' },
+  ]},
+};
+
+function makeDS(d){ return {
+  label:d.label, data:d.pts, borderColor:d.color, backgroundColor:d.color,
+  pointBackgroundColor:d.color, pointRadius:5, pointHoverRadius:8, borderWidth:3, tension:.25, fill:false,
+};}
+
+const chart = new Chart(document.getElementById('chart'),{
+  type:'line',
+  data:{ datasets:[ makeDS(FAM.gpt), makeDS(FAM.gemini), makeDS(FAM.claude) ] },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'nearest', intersect:false },
+    plugins:{
+      legend:{ display:false },
+      tooltip:{ backgroundColor:'#0e1424', borderColor:css('--border'), borderWidth:1,
+        padding:13, titleColor:'#fff', bodyColor:'#e8edf6',
+        callbacks:{
+          title:it=>it[0].raw.m,
+          label:it=>'Intelligence Index: '+it.raw.y,
+          afterLabel:it=>new Date(it.raw.x).toLocaleDateString('he-IL',{year:'numeric',month:'long'})
+        } }
+    },
+    scales:{
+      x:{ type:'time', min:'2024-01-01', max:'2026-09-01', time:{unit:'year'},
+          grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:css('--muted'),maxRotation:0} },
+      y:{ min:10, max:70, title:{display:true,text:'Intelligence Index',color:css('--muted')},
+          grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:css('--muted')} }
+    }
+  }
+});
+
+document.querySelectorAll('.chip[data-i]').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    const i=+chip.dataset.i;
+    chart.setDatasetVisibility(i,!chart.isDatasetVisible(i));
+    chip.classList.toggle('off',!chart.isDatasetVisible(i));
+    chart.update();
+  });
+});
+
+/* ════════════ Unified Ranking ════════════ */
+const all=[];
+for(const k in FAM) FAM[k].pts.forEach(p=>all.push({...p,color:FAM[k].color}));
+all.sort((a,b)=>b.y-a.y);
+const maxY=70, rk=document.getElementById('ranking');
+all.forEach((p,i)=>{
+  const row=document.createElement('div'); row.className='rank-row';
+  const date=new Date(p.x).toLocaleDateString('he-IL',{year:'numeric',month:'short'});
+  const crown=i===0?' 👑':'';
+  row.innerHTML=`
+    <div class="rank-num">${i+1}</div>
+    <div class="rank-name"><span class="cdot" style="background:${p.color}"></span>${p.m}${crown}</div>
+    <div class="rank-bar-track"><div class="rank-bar-fill" style="width:0%;background:linear-gradient(90deg,${p.color}99,${p.color})"></div></div>
+    <div class="rank-score" style="color:${p.color}">${p.y}</div>
+    <div class="rank-date">${date}</div>`;
+  rk.appendChild(row);
+  requestAnimationFrame(()=>setTimeout(()=>{
+    row.querySelector('.rank-bar-fill').style.width=(p.y/maxY*100)+'%';
+  }, i*45));
+});
+</script>
+</body>
+</html>
