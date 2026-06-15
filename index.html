@@ -13,35 +13,56 @@
   body{ font-family:'Segoe UI',system-ui,sans-serif;
     background:radial-gradient(circle at 20% 0%,#1a2236 0%,var(--bg) 55%);
     color:var(--text); min-height:100vh; padding:32px 20px 60px; }
-  .wrap{ max-width:1040px; margin:0 auto; }
+  .wrap{ max-width:1060px; margin:0 auto; }
   header{ text-align:center; margin-bottom:24px; }
   h1{ font-size:clamp(1.8rem,4vw,2.6rem); font-weight:800;
     background:linear-gradient(90deg,var(--gpt),var(--gemini),var(--claude));
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
-  header p{ color:var(--muted); font-size:1rem; line-height:1.7; }
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+  header p{ color:var(--muted); font-size:.95rem; line-height:1.7; }
   .card{ background:var(--panel); border:1px solid var(--border); border-radius:18px;
-    padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.4); margin-bottom:20px; }
-  .chart-box{ position:relative; height:430px; }
-  .legend-row{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:18px; }
-  .chip{ display:flex; align-items:center; gap:8px; background:#0e1424; border:1px solid var(--border);
-    padding:7px 15px; border-radius:999px; font-weight:600; font-size:.88rem; cursor:pointer; user-select:none; transition:opacity .2s; }
+    padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.4); margin-bottom:20px; }
+  .chart-box{ position:relative; height:420px; }
+  .legend-row{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+  .chip{ display:flex; align-items:center; gap:8px; background:#0e1424;
+    border:1px solid var(--border); padding:7px 15px; border-radius:999px;
+    font-weight:600; font-size:.88rem; cursor:pointer; user-select:none; transition:opacity .2s; }
   .chip .dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
   .chip.off{ opacity:.3; }
-  .section-title{ font-size:1.05rem; font-weight:700; margin:30px 0 14px; display:flex; align-items:center; gap:10px; }
+  .section-title{ font-size:1.05rem; font-weight:700; margin:28px 0 14px;
+    display:flex; align-items:center; gap:10px; }
   .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
-  .rank-row{ display:flex; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); }
-  .rank-num{ width:26px; text-align:center; color:var(--muted); font-weight:700; font-size:.85rem; flex-shrink:0; }
-  .rank-name{ width:175px; flex-shrink:0; font-weight:600; font-size:.85rem; display:flex; align-items:center; gap:7px; }
-  .rank-name .cdot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-  .rank-bar-track{ flex:1; background:#0e1424; border-radius:6px; height:22px; overflow:hidden; }
-  .rank-bar-fill{ height:100%; border-radius:6px; transition:width .8s ease; }
-  .rank-score{ width:46px; text-align:left; font-weight:700; font-size:.85rem; flex-shrink:0; }
-  .rank-date{ width:88px; text-align:left; color:var(--muted); font-size:.72rem; flex-shrink:0; }
-  @media(max-width:660px){ .rank-date{display:none;} .rank-name{width:120px;font-size:.76rem;} }
-  .note{ margin-top:16px; color:var(--muted); font-size:.78rem; text-align:center; line-height:1.85; }
+
+  /* search bar */
+  .search-wrap{ margin-bottom:14px; }
+  .search-wrap input{
+    width:100%; background:#0e1424; border:1px solid var(--border); border-radius:10px;
+    padding:10px 16px; color:var(--text); font-size:.9rem; outline:none; }
+  .search-wrap input::placeholder{ color:var(--muted); }
+
+  /* filter chips */
+  .filter-row{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .fchip{ padding:5px 14px; border-radius:999px; font-size:.8rem; font-weight:600;
+    border:1px solid; cursor:pointer; user-select:none; transition:opacity .2s; }
+  .fchip[data-co="all"]{ border-color:#555; color:#aaa; }
+  .fchip[data-co="gpt"]{ border-color:var(--gpt); color:var(--gpt); }
+  .fchip[data-co="gemini"]{ border-color:var(--gemini); color:var(--gemini); }
+  .fchip[data-co="claude"]{ border-color:var(--claude); color:var(--claude); }
+  .fchip.inactive{ opacity:.35; }
+
+  /* ranking rows */
+  .rank-row{ display:flex; align-items:center; gap:10px; padding:5px 0;
+    border-bottom:1px solid rgba(255,255,255,.04); }
+  .rank-num{ width:28px; text-align:center; color:var(--muted); font-weight:700; font-size:.8rem; flex-shrink:0; }
+  .rank-name{ width:195px; flex-shrink:0; font-weight:600; font-size:.82rem;
+    display:flex; align-items:center; gap:6px; }
+  .rank-name .cdot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .rank-bar-track{ flex:1; background:#0e1424; border-radius:6px; height:20px; overflow:hidden; }
+  .rank-bar-fill{ height:100%; border-radius:6px; transition:width .7s ease; }
+  .rank-score{ width:44px; text-align:left; font-weight:700; font-size:.82rem; flex-shrink:0; }
+  @media(max-width:600px){ .rank-name{width:130px;font-size:.75rem;} }
+
+  .note{ margin-top:14px; color:var(--muted); font-size:.75rem; text-align:center; line-height:1.85; }
   .note a{ color:#4285f4; text-decoration:none; }
-  .warn{ background:#1a2238; border:1px solid #33406a; border-radius:12px; padding:14px 18px;
-    font-size:.82rem; color:#aebbd4; line-height:1.7; margin-bottom:20px; }
 </style>
 </head>
 <body>
@@ -49,17 +70,11 @@
 
 <header>
   <h1>מירוץ ה-AI 🏁</h1>
-  <p>כל מודל מדורג לפי מדד אחד: <strong>Artificial Analysis Intelligence Index</strong><br>
-  מדד-על משוקלל (קידוד, מתמטיקה, מדע, סוכנים). ככל שגבוה יותר — חכם יותר.</p>
+  <p>כל מודל מדורג לפי <strong>Artificial Analysis Intelligence Index</strong> (מדד-על משוקלל).<br>
+  מקור: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank" style="color:#4285f4">BenchLM, 13.6.2026</a> + מאמר Artificial Analysis על Fable 5. רק מספרים מתועדים.</p>
 </header>
 
-<div class="warn">
-  📌 <strong>רק ציונים מתועדים.</strong> כל מספר כאן לקוח מאותו מקור אחד (Artificial Analysis Intelligence Index,
-  צילום מ-BenchLM / מאמר AA, 13 ביוני 2026). לא הוספתי, לא שיערכתי ולא המצאתי מספרים.
-  מודל שאין לו ציון מתועד במדד הזה — פשוט לא מופיע (לכן מודלים ישנים כמו GPT-4 / Claude 3 חסרים: המדד בגרסתו הנוכחית לא מדרג אותם).
-  <br>🔒 <strong>Claude Mythos 5</strong> קיים אך מוגבל לשותפי מחקר/אבטחה, וחולק את אותם משקלים כמו Fable 5 — אין לו ציון Index מתועד נפרד, ולכן אינו בדירוג.
-</div>
-
+<!-- Chart -->
 <div class="card">
   <div class="chart-box"><canvas id="chart"></canvas></div>
   <div class="legend-row">
@@ -69,44 +84,67 @@
   </div>
 </div>
 
-<div class="section-title">🏆 הדירוג המאוחד — כל המודלים יחד</div>
-<div class="card"><div id="ranking"></div></div>
+<!-- Full ranking -->
+<div class="section-title">🏆 דירוג מלא — כל המודלים</div>
+<div class="card">
+  <div class="search-wrap">
+    <input id="srch" type="text" placeholder="חפש מודל...">
+  </div>
+  <div class="filter-row">
+    <div class="fchip" data-co="all">הכל</div>
+    <div class="fchip" data-co="gpt">GPT / OpenAI</div>
+    <div class="fchip" data-co="gemini">Gemini / Google</div>
+    <div class="fchip" data-co="claude">Claude / Anthropic</div>
+  </div>
+  <div id="ranking"></div>
+</div>
 
 <p class="note">
-  מקור יחיד: <a href="https://artificialanalysis.ai/evaluations/artificial-analysis-intelligence-index" target="_blank">Artificial Analysis Intelligence Index</a>
-  · צילום ערכים: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM (13.6.2026)</a>
-  · Fable 5: <a href="https://artificialanalysis.ai/articles/claude-fable-5-mythos-intelligence-index" target="_blank">מאמר AA</a><br>
-  תאריכי ההשקה הם מידע ציבורי (לא ציונים). הציון הוא הקובע לדירוג.
+  מקורות: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM (13.6.2026)</a> ·
+  <a href="https://artificialanalysis.ai/articles/claude-fable-5-mythos-intelligence-index" target="_blank">Artificial Analysis — Fable 5</a><br>
+  תאריכי גרף: מועדי השקה ציבוריים (מודלי 2025–2026 — קירוב לפי סדר הגרסאות).<br>
+  🔒 Claude Mythos 5 = אותם משקלים כמו Fable 5, מוגבל לשותפי מחקר — אין ציון נפרד.
 </p>
-
 </div>
 
 <script>
 function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+const G=css('--gpt'), M=css('--gemini'), C=css('--claude');
 
-/* ════════════ DATA — Artificial Analysis Intelligence Index ════════════
-   רק ערכים מתועדים. ללא המצאות.
-   src: BenchLM 13.6.2026 / מאמר AA
-══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   CHART DATA — מודלים ראשיים לפי חברה, כולל גרסאות ביניים
+   ציונים: BenchLM 13.6.2026  |  תאריכים: ציבוריים / קירוב
+══════════════════════════════════════════════════════════ */
 const FAM = {
-  gpt: { label:'GPT / OpenAI', color:css('--gpt'), pts:[
+  gpt: { label:'GPT / OpenAI', color:G, pts:[
+    { x:'2023-11-06', y:13.7, m:'GPT-4 Turbo' },
     { x:'2024-05-13', y:17.3, m:'GPT-4o' },
+    { x:'2024-09-12', y:23.7, m:'o1-preview' },
     { x:'2024-12-05', y:30.8, m:'o1' },
     { x:'2025-04-16', y:38.4, m:'o3' },
+    { x:'2025-08-07', y:44.6, m:'GPT-5 (high)' },
     { x:'2025-11-13', y:47.7, m:'GPT-5.1' },
+    { x:'2026-02-01', y:51.3, m:'GPT-5.2' },
+    { x:'2026-04-01', y:56.8, m:'GPT-5.4' },
     { x:'2026-06-15', y:60.2, m:'GPT-5.5' },
   ]},
-  gemini: { label:'Gemini / Google', color:css('--gemini'), pts:[
+  gemini: { label:'Gemini / Google', color:M, pts:[
+    { x:'2023-12-06', y:8.5,  m:'Gemini 1.0 Pro' },
     { x:'2024-02-15', y:16.0, m:'Gemini 1.5 Pro' },
+    { x:'2024-09-24', y:20.6, m:'Gemini 2.5 Flash' },
     { x:'2025-03-25', y:34.6, m:'Gemini 2.5 Pro' },
     { x:'2025-11-18', y:48.4, m:'Gemini 3 Pro' },
     { x:'2026-02-19', y:57.2, m:'Gemini 3.1 Pro' },
-    { x:'2026-05-19', y:55.0, m:'Gemini 3.5 Flash' },
+    { x:'2026-05-19', y:55.3, m:'Gemini 3.5 Flash' },
   ]},
-  claude: { label:'Claude / Anthropic', color:css('--claude'), pts:[
+  claude: { label:'Claude / Anthropic', color:C, pts:[
+    { x:'2024-03-04', y:18.0, m:'Claude 3 Opus' },
+    { x:'2025-05-22', y:33.0, m:'Claude 4 Sonnet' },
+    { x:'2025-08-01', y:36.0, m:'Claude 4.1 Opus' },
     { x:'2025-11-24', y:43.1, m:'Claude Opus 4.5' },
     { x:'2025-12-15', y:44.4, m:'Claude Sonnet 4.6' },
     { x:'2026-01-20', y:46.5, m:'Claude Opus 4.6' },
+    { x:'2026-03-10', y:51.8, m:'Claude Opus 4.7' },
     { x:'2026-04-15', y:61.4, m:'Claude Opus 4.8' },
     { x:'2026-06-09', y:64.9, m:'Claude Fable 5' },
   ]},
@@ -114,12 +152,13 @@ const FAM = {
 
 function makeDS(d){ return {
   label:d.label, data:d.pts, borderColor:d.color, backgroundColor:d.color,
-  pointBackgroundColor:d.color, pointRadius:5, pointHoverRadius:8, borderWidth:3, tension:.25, fill:false,
+  pointBackgroundColor:d.color, pointRadius:5, pointHoverRadius:8,
+  borderWidth:3, tension:.25, fill:false,
 };}
 
 const chart = new Chart(document.getElementById('chart'),{
   type:'line',
-  data:{ datasets:[ makeDS(FAM.gpt), makeDS(FAM.gemini), makeDS(FAM.claude) ] },
+  data:{ datasets:[makeDS(FAM.gpt), makeDS(FAM.gemini), makeDS(FAM.claude)] },
   options:{
     responsive:true, maintainAspectRatio:false,
     interaction:{ mode:'nearest', intersect:false },
@@ -131,17 +170,16 @@ const chart = new Chart(document.getElementById('chart'),{
           title:it=>it[0].raw.m,
           label:it=>'Intelligence Index: '+it.raw.y,
           afterLabel:it=>new Date(it.raw.x).toLocaleDateString('he-IL',{year:'numeric',month:'long'})
-        } }
+        }}
     },
     scales:{
-      x:{ type:'time', min:'2024-01-01', max:'2026-09-01', time:{unit:'year'},
+      x:{ type:'time', min:'2023-09-01', max:'2026-09-01', time:{unit:'year'},
           grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:css('--muted'),maxRotation:0} },
-      y:{ min:10, max:70, title:{display:true,text:'Intelligence Index',color:css('--muted')},
+      y:{ min:0, max:70, title:{display:true,text:'Intelligence Index',color:css('--muted')},
           grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:css('--muted')} }
     }
   }
 });
-
 document.querySelectorAll('.chip[data-i]').forEach(chip=>{
   chip.addEventListener('click',()=>{
     const i=+chip.dataset.i;
@@ -151,26 +189,99 @@ document.querySelectorAll('.chip[data-i]').forEach(chip=>{
   });
 });
 
-/* ════════════ Unified Ranking ════════════ */
-const all=[];
-for(const k in FAM) FAM[k].pts.forEach(p=>all.push({...p,color:FAM[k].color}));
-all.sort((a,b)=>b.y-a.y);
-const maxY=70, rk=document.getElementById('ranking');
-all.forEach((p,i)=>{
-  const row=document.createElement('div'); row.className='rank-row';
-  const date=new Date(p.x).toLocaleDateString('he-IL',{year:'numeric',month:'short'});
-  const crown=i===0?' 👑':'';
-  row.innerHTML=`
-    <div class="rank-num">${i+1}</div>
-    <div class="rank-name"><span class="cdot" style="background:${p.color}"></span>${p.m}${crown}</div>
-    <div class="rank-bar-track"><div class="rank-bar-fill" style="width:0%;background:linear-gradient(90deg,${p.color}99,${p.color})"></div></div>
-    <div class="rank-score" style="color:${p.color}">${p.y}</div>
-    <div class="rank-date">${date}</div>`;
-  rk.appendChild(row);
-  requestAnimationFrame(()=>setTimeout(()=>{
-    row.querySelector('.rank-bar-fill').style.width=(p.y/maxY*100)+'%';
-  }, i*45));
+/* ══════════════════════════════════════════════════════════
+   FULL RANKING — כל מודלי GPT / Gemini / Claude מ-BenchLM
+══════════════════════════════════════════════════════════ */
+const ALL = [
+  // OpenAI
+  { m:'GPT-5.5',              co:'gpt', c:G, s:60.2 },
+  { m:'GPT-5.4',              co:'gpt', c:G, s:56.8 },
+  { m:'GPT-5.3 Codex',        co:'gpt', c:G, s:53.6 },
+  { m:'GPT-5.2',              co:'gpt', c:G, s:51.3 },
+  { m:'GPT-5.2-Codex',        co:'gpt', c:G, s:49.0 },
+  { m:'GPT-5.4 mini',         co:'gpt', c:G, s:48.9 },
+  { m:'GPT-5.1',              co:'gpt', c:G, s:47.7 },
+  { m:'GPT-5 (high)',         co:'gpt', c:G, s:44.6 },
+  { m:'GPT-5.4 nano',         co:'gpt', c:G, s:44.0 },
+  { m:'GPT-5.1-Codex-Max',    co:'gpt', c:G, s:43.1 },
+  { m:'GPT-5.1-Codex',        co:'gpt', c:G, s:43.1 },
+  { m:'GPT-5 (medium)',       co:'gpt', c:G, s:42.0 },
+  { m:'o3-pro',               co:'gpt', c:G, s:40.7 },
+  { m:'o3',                   co:'gpt', c:G, s:38.4 },
+  { m:'o1',                   co:'gpt', c:G, s:30.8 },
+  { m:'GPT-4.1',              co:'gpt', c:G, s:26.3 },
+  { m:'o3-mini',              co:'gpt', c:G, s:25.9 },
+  { m:'o1-pro',               co:'gpt', c:G, s:25.8 },
+  { m:'o1-preview',           co:'gpt', c:G, s:23.7 },
+  { m:'GPT-4.1 mini',         co:'gpt', c:G, s:22.9 },
+  { m:'GPT-4o',               co:'gpt', c:G, s:17.3 },
+  { m:'GPT-4 Turbo',          co:'gpt', c:G, s:13.7 },
+  { m:'GPT-4o mini',          co:'gpt', c:G, s:12.7 },
+  { m:'GPT-4.1 nano',         co:'gpt', c:G, s:13.0 },
+  // Google Gemini
+  { m:'Gemini 3.1 Pro',       co:'gemini', c:M, s:57.2 },
+  { m:'Gemini 3.5 Flash',     co:'gemini', c:M, s:55.3 },
+  { m:'Gemini 3 Pro',         co:'gemini', c:M, s:48.4 },
+  { m:'Gemini 3 Flash',       co:'gemini', c:M, s:35.0 },
+  { m:'Gemini 2.5 Pro',       co:'gemini', c:M, s:34.6 },
+  { m:'Gemini 3.1 Flash-Lite',co:'gemini', c:M, s:33.5 },
+  { m:'Gemini 2.5 Flash',     co:'gemini', c:M, s:20.6 },
+  { m:'Gemini 1.5 Pro',       co:'gemini', c:M, s:16.0 },
+  { m:'Gemini 1.0 Pro',       co:'gemini', c:M, s:8.5  },
+  // Anthropic Claude
+  { m:'Claude Fable 5',           co:'claude', c:C, s:64.9 },
+  { m:'Claude Opus 4.8',          co:'claude', c:C, s:61.4 },
+  { m:'Claude Opus 4.7 (Adaptive)',co:'claude',c:C, s:57.3 },
+  { m:'Claude Opus 4.6 (Adaptive)',co:'claude',c:C, s:53.0 },
+  { m:'Claude Opus 4.7',          co:'claude', c:C, s:51.8 },
+  { m:'Claude Opus 4.5 Thinking', co:'claude', c:C, s:49.7 },
+  { m:'Claude Sonnet 4.6',        co:'claude', c:C, s:44.4 },
+  { m:'Claude Opus 4.5',          co:'claude', c:C, s:43.1 },
+  { m:'Claude 4.1 Opus Thinking', co:'claude', c:C, s:42.0 },
+  { m:'Claude 4.1 Opus',          co:'claude', c:C, s:36.0 },
+  { m:'Claude 4 Sonnet',          co:'claude', c:C, s:33.0 },
+  { m:'Claude 3 Opus',            co:'claude', c:C, s:18.0 },
+  { m:'Claude 3 Haiku',           co:'claude', c:C, s:12.3 },
+].sort((a,b)=>b.s-a.s);
+
+const MAX_S = 70;
+let activeFilter = 'all';
+
+function buildRanking(query='') {
+  const rk = document.getElementById('ranking');
+  rk.innerHTML = '';
+  const q = query.trim().toLowerCase();
+  const visible = ALL.filter(p =>
+    (activeFilter==='all' || p.co===activeFilter) &&
+    (!q || p.m.toLowerCase().includes(q))
+  );
+  visible.forEach((p,i) => {
+    const row = document.createElement('div'); row.className='rank-row';
+    const crown = i===0 && !q && activeFilter==='all' ? ' 👑' : '';
+    row.innerHTML=`
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-name"><span class="cdot" style="background:${p.c}"></span>${p.m}${crown}</div>
+      <div class="rank-bar-track"><div class="rank-bar-fill" style="width:0%;background:linear-gradient(90deg,${p.c}99,${p.c})"></div></div>
+      <div class="rank-score" style="color:${p.c}">${p.s}</div>`;
+    rk.appendChild(row);
+    requestAnimationFrame(()=>setTimeout(()=>{
+      row.querySelector('.rank-bar-fill').style.width=(p.s/MAX_S*100)+'%';
+    }, i*30));
+  });
+  if(!visible.length) rk.innerHTML='<div style="color:var(--muted);padding:16px;text-align:center">אין תוצאות</div>';
+}
+
+document.getElementById('srch').addEventListener('input', e => buildRanking(e.target.value));
+
+document.querySelectorAll('.fchip').forEach(fc => {
+  fc.addEventListener('click', () => {
+    activeFilter = fc.dataset.co;
+    document.querySelectorAll('.fchip').forEach(x => x.classList.toggle('inactive', x!==fc));
+    buildRanking(document.getElementById('srch').value);
+  });
 });
+
+buildRanking();
 </script>
 </body>
 </html>
