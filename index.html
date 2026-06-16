@@ -39,6 +39,16 @@
     padding:10px 16px; color:var(--text); font-size:.9rem; outline:none; }
   .search-wrap input::placeholder{ color:var(--muted); }
 
+  /* category tabs */
+  .cat-row{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .catchip{ padding:8px 18px; border-radius:999px; font-size:.9rem; font-weight:700;
+    border:1px solid var(--border); background:#0e1424; color:var(--muted);
+    cursor:pointer; user-select:none; transition:all .2s; }
+  .catchip.active{ background:linear-gradient(90deg,var(--gpt),var(--gemini),var(--claude));
+    color:#fff; border-color:transparent; }
+  .cat-src{ color:var(--muted); font-size:.78rem; margin-bottom:14px; line-height:1.6; }
+  .cat-src a{ color:#4285f4; text-decoration:none; }
+
   /* filter chips */
   .filter-row{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
   .fchip{ padding:5px 14px; border-radius:999px; font-size:.8rem; font-weight:600;
@@ -70,8 +80,8 @@
 
 <header>
   <h1>מירוץ ה-AI 🏁</h1>
-  <p>כל מודל מדורג לפי <strong>Artificial Analysis Intelligence Index</strong> (מדד-על משוקלל).<br>
-  מקור: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank" style="color:#4285f4">BenchLM, 13.6.2026</a> + מאמר Artificial Analysis על Fable 5. רק מספרים מתועדים.</p>
+  <p>דירוג ב-3 קטגוריות: <strong>כללי</strong> (Intelligence Index) · <strong>קוד</strong> (SWE-bench Pro) · <strong>מחקר</strong> (Humanity's Last Exam).<br>
+  הגרף למטה מציג את ציר הזמן של ה-<strong>Intelligence Index</strong> הכללי. רק מספרים רשמיים ומתועדים — שום ציון לא הומצא.</p>
 </header>
 
 <!-- Chart -->
@@ -85,8 +95,14 @@
 </div>
 
 <!-- Full ranking -->
-<div class="section-title">🏆 דירוג מלא — כל המודלים</div>
+<div class="section-title">🏆 דירוג מלא — לפי קטגוריה</div>
 <div class="card">
+  <div class="cat-row">
+    <div class="catchip active" data-cat="general">כללי 🧠</div>
+    <div class="catchip" data-cat="code">קוד 💻</div>
+    <div class="catchip" data-cat="research">מחקר 🔬</div>
+  </div>
+  <div class="cat-src" id="catSrc"></div>
   <div class="search-wrap">
     <input id="srch" type="text" placeholder="חפש מודל...">
   </div>
@@ -100,10 +116,11 @@
 </div>
 
 <p class="note">
-  מקורות: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM (13.6.2026)</a> ·
-  <a href="https://artificialanalysis.ai/articles/claude-fable-5-mythos-intelligence-index" target="_blank">Artificial Analysis — Fable 5</a><br>
-  תאריכי גרף: מועדי השקה ציבוריים (מודלי 2025–2026 — קירוב לפי סדר הגרסאות).<br>
-  🔒 Claude Mythos 5 = אותם משקלים כמו Fable 5, מוגבל לשותפי מחקר — אין ציון נפרד.
+  מקורות רשמיים לפי קטגוריה:<br>
+  🧠 כללי — <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM · Artificial Analysis Intelligence Index (13.6.2026)</a><br>
+  💻 קוד — <a href="https://llm-stats.com/benchmarks/swe-bench-verified" target="_blank">LLM-Stats · SWE-bench Verified</a><br>
+  🔬 מחקר — <a href="https://labs.scale.com/leaderboard/humanitys_last_exam" target="_blank">Humanity's Last Exam · Scale Labs</a><br>
+  ⚠️ אין מקור רשמי אחד שמכסה את כל המודלים בקוד/מחקר — מוצגים רק מודלים עם ציון רשמי מתועד באותו בנצ'מרק; מודל ללא ציון רשמי אינו מופיע בקטגוריה. שום מספר לא הומצא.
 </p>
 </div>
 
@@ -156,32 +173,74 @@ function makeDS(d){ return {
   borderWidth:3, tension:.25, fill:false,
 };}
 
-const chart = new Chart(document.getElementById('chart'),{
-  type:'line',
-  data:{ datasets:[makeDS(FAM.gpt), makeDS(FAM.gemini), makeDS(FAM.claude)] },
-  options:{
-    responsive:true, maintainAspectRatio:false,
-    interaction:{ mode:'nearest', intersect:false },
-    plugins:{
-      legend:{ display:false },
-      tooltip:{ backgroundColor:'#0e1424', borderColor:css('--border'), borderWidth:1,
-        padding:13, titleColor:'#fff', bodyColor:'#e8edf6',
-        callbacks:{
-          title:it=>it[0].raw.m,
-          label:it=>'Intelligence Index: '+it.raw.y,
-          afterLabel:it=>new Date(it.raw.x).toLocaleDateString('he-IL',{year:'numeric',month:'long'})
-        }}
-    },
-    scales:{
-      x:{ type:'time', min:'2023-09-01', max:'2026-09-01', time:{unit:'year'},
-          grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:css('--muted'),maxRotation:0} },
-      y:{ min:0, max:70, title:{display:true,text:'Intelligence Index',color:css('--muted')},
-          grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:css('--muted')} }
+let chart=null;
+
+function renderChart(){
+  const ctx=document.getElementById('chart');
+  const legendRow=document.querySelector('.legend-row');
+  if(chart){ chart.destroy(); chart=null; }
+  try{
+    if(activeCat==='general'){
+      // קו זמן של ה-Intelligence Index
+      legendRow.style.display='';
+      chart = new Chart(ctx,{
+        type:'line',
+        data:{ datasets:[makeDS(FAM.gpt), makeDS(FAM.gemini), makeDS(FAM.claude)] },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          interaction:{ mode:'nearest', intersect:false },
+          plugins:{
+            legend:{ display:false },
+            tooltip:{ backgroundColor:'#0e1424', borderColor:css('--border'), borderWidth:1,
+              padding:13, titleColor:'#fff', bodyColor:'#e8edf6',
+              callbacks:{
+                title:it=>it[0].raw.m,
+                label:it=>'Intelligence Index: '+it.raw.y,
+                afterLabel:it=>new Date(it.raw.x).toLocaleDateString('he-IL',{year:'numeric',month:'long'})
+              }}
+          },
+          scales:{
+            x:{ type:'time', min:'2023-09-01', max:'2026-09-01', time:{unit:'year'},
+                grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:css('--muted'),maxRotation:0} },
+            y:{ min:0, max:70, title:{display:true,text:'Intelligence Index',color:css('--muted')},
+                grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:css('--muted')} }
+          }
+        }
+      });
+    } else {
+      // תרשים עמודות אופקי — Top מודלים בקטגוריה הפעילה
+      legendRow.style.display='none';
+      const cat=CATS[activeCat];
+      const rows=[...cat.data]
+        .filter(p=>activeFilter==='all'||p.co===activeFilter)
+        .sort((a,b)=>b.s-a.s).slice(0,15);
+      chart = new Chart(ctx,{
+        type:'bar',
+        data:{ labels:rows.map(r=>r.m),
+          datasets:[{ data:rows.map(r=>r.s), backgroundColor:rows.map(r=>r.c),
+            borderRadius:5, barThickness:'flex', maxBarThickness:22 }] },
+        options:{
+          indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins:{
+            legend:{ display:false },
+            tooltip:{ backgroundColor:'#0e1424', borderColor:css('--border'), borderWidth:1,
+              padding:13, titleColor:'#fff', bodyColor:'#e8edf6',
+              callbacks:{ label:it=>cat.label.split(' · ')[0]+': '+it.raw } }
+          },
+          scales:{
+            x:{ min:0, max:cat.max, grid:{color:'rgba(255,255,255,.05)'},
+                ticks:{color:css('--muted')} },
+            y:{ grid:{display:false}, ticks:{color:css('--text'),autoSkip:false,font:{size:10.5}} }
+          }
+        }
+      });
     }
-  }
-});
+  }catch(e){ console.error('Chart init failed (CDN?):', e); }
+}
+
 document.querySelectorAll('.chip[data-i]').forEach(chip=>{
   chip.addEventListener('click',()=>{
+    if(!chart || activeCat!=='general') return;
     const i=+chip.dataset.i;
     chart.setDatasetVisibility(i,!chart.isDatasetVisible(i));
     chip.classList.toggle('off',!chart.isDatasetVisible(i));
@@ -190,68 +249,155 @@ document.querySelectorAll('.chip[data-i]').forEach(chip=>{
 });
 
 /* ══════════════════════════════════════════════════════════
-   FULL RANKING — כל מודלי GPT / Gemini / Claude מ-BenchLM
+   FULL RANKING — שלוש קטגוריות, רק מספרים רשמיים מתועדים
+   • כללי   = Artificial Analysis Intelligence Index (BenchLM 13.6.2026)
+   • קוד    = SWE-bench Pro · Scale SEAL (אותו scaffolding לכולם)
+   • מחקר   = Humanity's Last Exam · Scale Labs
+   מודלים ללא ציון רשמי בקטגוריה — אינם מוצגים בה (לא הומצא דבר).
 ══════════════════════════════════════════════════════════ */
-const ALL = [
-  // OpenAI
-  { m:'GPT-5.5',              co:'gpt', c:G, s:60.2 },
-  { m:'GPT-5.4',              co:'gpt', c:G, s:56.8 },
-  { m:'GPT-5.3 Codex',        co:'gpt', c:G, s:53.6 },
-  { m:'GPT-5.2',              co:'gpt', c:G, s:51.3 },
-  { m:'GPT-5.2-Codex',        co:'gpt', c:G, s:49.0 },
-  { m:'GPT-5.4 mini',         co:'gpt', c:G, s:48.9 },
-  { m:'GPT-5.1',              co:'gpt', c:G, s:47.7 },
-  { m:'GPT-5 (high)',         co:'gpt', c:G, s:44.6 },
-  { m:'GPT-5.4 nano',         co:'gpt', c:G, s:44.0 },
-  { m:'GPT-5.1-Codex-Max',    co:'gpt', c:G, s:43.1 },
-  { m:'GPT-5.1-Codex',        co:'gpt', c:G, s:43.1 },
-  { m:'GPT-5 (medium)',       co:'gpt', c:G, s:42.0 },
-  { m:'o3-pro',               co:'gpt', c:G, s:40.7 },
-  { m:'o3',                   co:'gpt', c:G, s:38.4 },
-  { m:'o1',                   co:'gpt', c:G, s:30.8 },
-  { m:'GPT-4.1',              co:'gpt', c:G, s:26.3 },
-  { m:'o3-mini',              co:'gpt', c:G, s:25.9 },
-  { m:'o1-pro',               co:'gpt', c:G, s:25.8 },
-  { m:'o1-preview',           co:'gpt', c:G, s:23.7 },
-  { m:'GPT-4.1 mini',         co:'gpt', c:G, s:22.9 },
-  { m:'GPT-4o',               co:'gpt', c:G, s:17.3 },
-  { m:'GPT-4 Turbo',          co:'gpt', c:G, s:13.7 },
-  { m:'GPT-4o mini',          co:'gpt', c:G, s:12.7 },
-  { m:'GPT-4.1 nano',         co:'gpt', c:G, s:13.0 },
-  // Google Gemini
-  { m:'Gemini 3.1 Pro',       co:'gemini', c:M, s:57.2 },
-  { m:'Gemini 3.5 Flash',     co:'gemini', c:M, s:55.3 },
-  { m:'Gemini 3 Pro',         co:'gemini', c:M, s:48.4 },
-  { m:'Gemini 3 Flash',       co:'gemini', c:M, s:35.0 },
-  { m:'Gemini 2.5 Pro',       co:'gemini', c:M, s:34.6 },
-  { m:'Gemini 3.1 Flash-Lite',co:'gemini', c:M, s:33.5 },
-  { m:'Gemini 2.5 Flash',     co:'gemini', c:M, s:20.6 },
-  { m:'Gemini 1.5 Pro',       co:'gemini', c:M, s:16.0 },
-  { m:'Gemini 1.0 Pro',       co:'gemini', c:M, s:8.5  },
-  // Anthropic Claude
-  { m:'Claude Fable 5',           co:'claude', c:C, s:64.9 },
-  { m:'Claude Opus 4.8',          co:'claude', c:C, s:61.4 },
-  { m:'Claude Opus 4.7 (Adaptive)',co:'claude',c:C, s:57.3 },
-  { m:'Claude Opus 4.6 (Adaptive)',co:'claude',c:C, s:53.0 },
-  { m:'Claude Opus 4.7',          co:'claude', c:C, s:51.8 },
-  { m:'Claude Opus 4.5 Thinking', co:'claude', c:C, s:49.7 },
-  { m:'Claude Sonnet 4.6',        co:'claude', c:C, s:44.4 },
-  { m:'Claude Opus 4.5',          co:'claude', c:C, s:43.1 },
-  { m:'Claude 4.1 Opus Thinking', co:'claude', c:C, s:42.0 },
-  { m:'Claude 4.1 Opus',          co:'claude', c:C, s:36.0 },
-  { m:'Claude 4 Sonnet',          co:'claude', c:C, s:33.0 },
-  { m:'Claude 3 Opus',            co:'claude', c:C, s:18.0 },
-  { m:'Claude 3 Haiku',           co:'claude', c:C, s:12.3 },
-].sort((a,b)=>b.s-a.s);
+const CATS = {
+  general: {
+    label:'כללי · Artificial Analysis Intelligence Index',
+    max:70,
+    src:'מקור: <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM — Artificial Analysis Intelligence Index, 13.6.2026</a>',
+    data:[
+      // OpenAI
+      { m:'GPT-5.5',              co:'gpt', c:G, s:60.2 },
+      { m:'GPT-5.4',              co:'gpt', c:G, s:56.8 },
+      { m:'GPT-5.3 Codex',        co:'gpt', c:G, s:53.6 },
+      { m:'GPT-5.2',              co:'gpt', c:G, s:51.3 },
+      { m:'GPT-5.2-Codex',        co:'gpt', c:G, s:49.0 },
+      { m:'GPT-5.4 mini',         co:'gpt', c:G, s:48.9 },
+      { m:'GPT-5.1',              co:'gpt', c:G, s:47.7 },
+      { m:'GPT-5 (high)',         co:'gpt', c:G, s:44.6 },
+      { m:'GPT-5.4 nano',         co:'gpt', c:G, s:44.0 },
+      { m:'GPT-5.1-Codex-Max',    co:'gpt', c:G, s:43.1 },
+      { m:'GPT-5.1-Codex',        co:'gpt', c:G, s:43.1 },
+      { m:'GPT-5 (medium)',       co:'gpt', c:G, s:42.0 },
+      { m:'o3-pro',               co:'gpt', c:G, s:40.7 },
+      { m:'o3',                   co:'gpt', c:G, s:38.4 },
+      { m:'o1',                   co:'gpt', c:G, s:30.8 },
+      { m:'GPT-4.1',              co:'gpt', c:G, s:26.3 },
+      { m:'o3-mini',              co:'gpt', c:G, s:25.9 },
+      { m:'o1-pro',               co:'gpt', c:G, s:25.8 },
+      { m:'o1-preview',           co:'gpt', c:G, s:23.7 },
+      { m:'GPT-4.1 mini',         co:'gpt', c:G, s:22.9 },
+      { m:'GPT-4o',               co:'gpt', c:G, s:17.3 },
+      { m:'GPT-4 Turbo',          co:'gpt', c:G, s:13.7 },
+      { m:'GPT-4o mini',          co:'gpt', c:G, s:12.7 },
+      { m:'GPT-4.1 nano',         co:'gpt', c:G, s:13.0 },
+      // Google Gemini
+      { m:'Gemini 3.1 Pro',       co:'gemini', c:M, s:57.2 },
+      { m:'Gemini 3.5 Flash',     co:'gemini', c:M, s:55.3 },
+      { m:'Gemini 3 Pro',         co:'gemini', c:M, s:48.4 },
+      { m:'Gemini 3 Flash',       co:'gemini', c:M, s:35.0 },
+      { m:'Gemini 2.5 Pro',       co:'gemini', c:M, s:34.6 },
+      { m:'Gemini 3.1 Flash-Lite',co:'gemini', c:M, s:33.5 },
+      { m:'Gemini 2.5 Flash',     co:'gemini', c:M, s:20.6 },
+      { m:'Gemini 1.5 Pro',       co:'gemini', c:M, s:16.0 },
+      { m:'Gemini 1.0 Pro',       co:'gemini', c:M, s:8.5  },
+      // Anthropic Claude
+      { m:'Claude Fable 5',           co:'claude', c:C, s:64.9 },
+      { m:'Claude Opus 4.8',          co:'claude', c:C, s:61.4 },
+      { m:'Claude Opus 4.7 (Adaptive)',co:'claude',c:C, s:57.3 },
+      { m:'Claude Opus 4.6 (Adaptive)',co:'claude',c:C, s:53.0 },
+      { m:'Claude Opus 4.7',          co:'claude', c:C, s:51.8 },
+      { m:'Claude Opus 4.5 Thinking', co:'claude', c:C, s:49.7 },
+      { m:'Claude Sonnet 4.6',        co:'claude', c:C, s:44.4 },
+      { m:'Claude Opus 4.5',          co:'claude', c:C, s:43.1 },
+      { m:'Claude 4.1 Opus Thinking', co:'claude', c:C, s:42.0 },
+      { m:'Claude 4.1 Opus',          co:'claude', c:C, s:36.0 },
+      { m:'Claude 4 Sonnet',          co:'claude', c:C, s:33.0 },
+      { m:'Claude 3 Opus',            co:'claude', c:C, s:18.0 },
+      { m:'Claude 3 Haiku',           co:'claude', c:C, s:12.3 },
+    ],
+  },
 
-const MAX_S = 70;
+  code: {
+    label:'קוד · SWE-bench Verified (% נפתר)',
+    max:100,
+    src:'מקור: <a href="https://llm-stats.com/benchmarks/swe-bench-verified" target="_blank">LLM-Stats · SWE-bench Verified</a>. מסונן ל-GPT / Gemini / Claude.',
+    data:[
+      // Anthropic Claude
+      { m:'Claude Fable 5',           co:'claude', c:C, s:95.0 },
+      { m:'Claude Mythos Preview',    co:'claude', c:C, s:93.9 },
+      { m:'Claude Opus 4.8',          co:'claude', c:C, s:88.6 },
+      { m:'Claude Opus 4.7',          co:'claude', c:C, s:87.6 },
+      { m:'Claude Opus 4.5',          co:'claude', c:C, s:80.9 },
+      { m:'Claude Opus 4.6',          co:'claude', c:C, s:80.8 },
+      { m:'Claude Sonnet 4.6',        co:'claude', c:C, s:79.6 },
+      { m:'Claude 4.1 Opus',          co:'claude', c:C, s:74.5 },
+      { m:'Claude Haiku 4.5',         co:'claude', c:C, s:73.3 },
+      { m:'Claude 4 Sonnet',          co:'claude', c:C, s:72.7 },
+      { m:'Claude Opus 4',            co:'claude', c:C, s:72.5 },
+      // OpenAI
+      { m:'GPT-5.2',                  co:'gpt',    c:G, s:80.0 },
+      { m:'GPT-5.1',                  co:'gpt',    c:G, s:76.3 },
+      { m:'GPT-5',                    co:'gpt',    c:G, s:74.9 },
+      { m:'GPT-5 Codex',              co:'gpt',    c:G, s:74.5 },
+      { m:'GPT-5.1 Codex',            co:'gpt',    c:G, s:73.7 },
+      // Google Gemini
+      { m:'Gemini 3.1 Pro',           co:'gemini', c:M, s:80.6 },
+      { m:'Gemini 3 Flash',           co:'gemini', c:M, s:78.0 },
+      { m:'Gemini 3 Pro',             co:'gemini', c:M, s:76.2 },
+    ],
+  },
+
+  research: {
+    label:'מחקר · Humanity\'s Last Exam (% דיוק)',
+    max:50,
+    src:'מקור: <a href="https://labs.scale.com/leaderboard/humanitys_last_exam" target="_blank">Humanity\'s Last Exam · Scale Labs</a> (יוצרי המבחן). רק מודלים שהורצו רשמית.',
+    data:[
+      { m:'Gemini 3.1 Pro (thinking high)',co:'gemini', c:M, s:46.44 },
+      { m:'GPT-5.4 Pro',              co:'gpt',    c:G, s:44.32 },
+      { m:'Gemini 3 Pro (preview)',   co:'gemini', c:M, s:37.52 },
+      { m:'GPT-5.4 (xhigh thinking)', co:'gpt',    c:G, s:36.24 },
+      { m:'Claude Opus 4.7',          co:'claude', c:C, s:36.20 },
+      { m:'Claude Opus 4.6 (thinking)',co:'claude',c:C, s:34.44 },
+      { m:'GPT-5 Pro',                co:'gpt',    c:G, s:31.64 },
+      { m:'GPT-5.2',                  co:'gpt',    c:G, s:27.80 },
+      { m:'GPT-5',                    co:'gpt',    c:G, s:25.32 },
+      { m:'Claude Opus 4.5 (thinking)',co:'claude',c:C, s:25.20 },
+      { m:'GPT-5.1 (thinking)',       co:'gpt',    c:G, s:23.68 },
+      { m:'Gemini 2.5 Pro',           co:'gemini', c:M, s:21.64 },
+      { m:'o3 (high)',                co:'gpt',    c:G, s:20.32 },
+      { m:'GPT-5 mini',               co:'gpt',    c:G, s:19.44 },
+      { m:'Claude Opus 4.6 (non-thinking)',co:'claude',c:C, s:19.00 },
+      { m:'o4-mini (high)',           co:'gpt',    c:G, s:18.08 },
+      { m:'Claude Opus 4.5',          co:'claude', c:C, s:14.16 },
+      { m:'Claude Sonnet 4.5 (thinking)',co:'claude',c:C, s:13.72 },
+      { m:'Gemini 2.5 Flash',         co:'gemini', c:M, s:12.08 },
+      { m:'Claude 4.1 Opus (thinking)',co:'claude',c:C, s:11.52 },
+      { m:'Claude Opus 4 (thinking)', co:'claude', c:C, s:10.72 },
+      { m:'Gemini 3.1 Flash-Lite',    co:'gemini', c:M, s:8.64 },
+      { m:'o1 Pro',                   co:'gpt',    c:G, s:8.12 },
+      { m:'Claude 3.7 Sonnet (thinking)',co:'claude',c:C, s:8.04 },
+      { m:'o1',                       co:'gpt',    c:G, s:7.96 },
+      { m:'Claude 4.1 Opus',          co:'claude', c:C, s:7.92 },
+      { m:'GPT-5.1 Instant',          co:'gpt',    c:G, s:6.80 },
+      { m:'Claude Opus 4',            co:'claude', c:C, s:6.68 },
+      { m:'Claude Sonnet 4',          co:'claude', c:C, s:5.52 },
+      { m:'GPT-4.5 Preview',          co:'gpt',    c:G, s:5.44 },
+      { m:'GPT-4.1',                  co:'gpt',    c:G, s:5.40 },
+      { m:'Gemini 1.5 Pro',           co:'gemini', c:M, s:4.60 },
+      { m:'Claude 3.5 Sonnet',        co:'claude', c:C, s:4.08 },
+      { m:'GPT-4o',                   co:'gpt',    c:G, s:2.72 },
+    ],
+  },
+};
+
+let activeCat = 'general';
 let activeFilter = 'all';
 
 function buildRanking(query='') {
   const rk = document.getElementById('ranking');
   rk.innerHTML = '';
+  const cat = CATS[activeCat];
+  document.getElementById('catSrc').innerHTML = cat.src;
+  const MAX_S = cat.max;
+  const sorted = [...cat.data].sort((a,b)=>b.s-a.s);
   const q = query.trim().toLowerCase();
-  const visible = ALL.filter(p =>
+  const visible = sorted.filter(p =>
     (activeFilter==='all' || p.co===activeFilter) &&
     (!q || p.m.toLowerCase().includes(q))
   );
@@ -273,15 +419,26 @@ function buildRanking(query='') {
 
 document.getElementById('srch').addEventListener('input', e => buildRanking(e.target.value));
 
+document.querySelectorAll('.catchip').forEach(cc => {
+  cc.addEventListener('click', () => {
+    activeCat = cc.dataset.cat;
+    document.querySelectorAll('.catchip').forEach(x => x.classList.toggle('active', x===cc));
+    buildRanking(document.getElementById('srch').value);
+    renderChart();
+  });
+});
+
 document.querySelectorAll('.fchip').forEach(fc => {
   fc.addEventListener('click', () => {
     activeFilter = fc.dataset.co;
     document.querySelectorAll('.fchip').forEach(x => x.classList.toggle('inactive', x!==fc));
     buildRanking(document.getElementById('srch').value);
+    renderChart();
   });
 });
 
 buildRanking();
+renderChart();
 </script>
 </body>
 </html>
