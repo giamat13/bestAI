@@ -32,6 +32,18 @@
     display:flex; align-items:center; gap:10px; }
   .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
 
+  /* chart type tabs */
+  .chart-tabs{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .chart-tab{ padding:8px 18px; border-radius:999px; font-size:.9rem; font-weight:700;
+    border:1px solid var(--border); background:#0e1424; color:var(--muted);
+    cursor:pointer; user-select:none; transition:all .2s; }
+  .chart-tab.active{ background:linear-gradient(90deg,var(--gpt),var(--gemini),var(--claude));
+    color:#fff; border-color:transparent; }
+
+  /* hide ranking when efficiency view */
+  .ranking-section{ transition:opacity .3s ease, visibility .3s ease; }
+  .ranking-section.hidden{ opacity:0; visibility:hidden; height:0; margin:0; padding:0; }
+
   /* search bar */
   .search-wrap{ margin-bottom:14px; }
   .search-wrap input{
@@ -86,6 +98,10 @@
 
 <!-- Chart -->
 <div class="card">
+  <div class="chart-tabs">
+    <div class="chart-tab active" data-chart="timeline">📈 ציר זמן</div>
+    <div class="chart-tab" data-chart="efficiency">⚡ יעילות טוקנים</div>
+  </div>
   <div class="chart-box"><canvas id="chart"></canvas></div>
   <div class="legend-row">
     <div class="chip" data-i="0"><span class="dot" style="background:var(--gpt)"></span>GPT / OpenAI</div>
@@ -95,8 +111,8 @@
 </div>
 
 <!-- Full ranking -->
-<div class="section-title">🏆 דירוג מלא — לפי קטגוריה</div>
-<div class="card">
+<div class="section-title ranking-section">🏆 דירוג מלא — לפי קטגוריה</div>
+<div class="card ranking-section">
   <div class="cat-row">
     <div class="catchip active" data-cat="general">כללי 🧠</div>
     <div class="catchip" data-cat="code">קוד 💻</div>
@@ -115,7 +131,7 @@
   <div id="ranking"></div>
 </div>
 
-<p class="note">
+<p class="note ranking-section">
   מקורות רשמיים לפי קטגוריה:<br>
   🧠 כללי — <a href="https://benchlm.ai/benchmarks/artificialAnalysis" target="_blank">BenchLM · Artificial Analysis Intelligence Index (13.6.2026)</a><br>
   💻 קוד — <a href="https://llm-stats.com/benchmarks/swe-bench-verified" target="_blank">LLM-Stats</a> + <a href="https://www.vals.ai/benchmarks/swebench" target="_blank">Vals.ai</a> · SWE-bench Verified<br>
@@ -132,39 +148,40 @@ const G=css('--gpt'), M=css('--gemini'), C=css('--claude');
 /* ══════════════════════════════════════════════════════════
    CHART DATA — מודלים ראשיים לפי חברה, כולל גרסאות ביניים
    ציונים: BenchLM 13.6.2026  |  תאריכים: ציבוריים / קירוב
+   עלות: $/1K tokens (input/output)
 ══════════════════════════════════════════════════════════ */
 const FAM = {
   gpt: { label:'GPT / OpenAI', color:G, pts:[
-    { x:'2023-11-06', y:13.7, m:'GPT-4 Turbo' },
-    { x:'2024-05-13', y:17.3, m:'GPT-4o' },
-    { x:'2024-09-12', y:23.7, m:'o1-preview' },
-    { x:'2024-12-05', y:30.8, m:'o1' },
-    { x:'2025-04-16', y:38.4, m:'o3' },
-    { x:'2025-08-07', y:44.6, m:'GPT-5 (high)' },
-    { x:'2025-11-13', y:47.7, m:'GPT-5.1' },
-    { x:'2026-02-01', y:51.3, m:'GPT-5.2' },
-    { x:'2026-04-01', y:56.8, m:'GPT-5.4' },
-    { x:'2026-06-15', y:60.2, m:'GPT-5.5' },
+    { x:'2023-11-06', y:13.7, m:'GPT-4 Turbo', cost:.015 },
+    { x:'2024-05-13', y:17.3, m:'GPT-4o', cost:.005 },
+    { x:'2024-09-12', y:23.7, m:'o1-preview', cost:.015 },
+    { x:'2024-12-05', y:30.8, m:'o1', cost:.020 },
+    { x:'2025-04-16', y:38.4, m:'o3', cost:.040 },
+    { x:'2025-08-07', y:44.6, m:'GPT-5 (high)', cost:.035 },
+    { x:'2025-11-13', y:47.7, m:'GPT-5.1', cost:.033 },
+    { x:'2026-02-01', y:51.3, m:'GPT-5.2', cost:.038 },
+    { x:'2026-04-01', y:56.8, m:'GPT-5.4', cost:.042 },
+    { x:'2026-06-15', y:60.2, m:'GPT-5.5', cost:.045 },
   ]},
   gemini: { label:'Gemini / Google', color:M, pts:[
-    { x:'2023-12-06', y:8.5,  m:'Gemini 1.0 Pro' },
-    { x:'2024-02-15', y:16.0, m:'Gemini 1.5 Pro' },
-    { x:'2024-09-24', y:20.6, m:'Gemini 2.5 Flash' },
-    { x:'2025-03-25', y:34.6, m:'Gemini 2.5 Pro' },
-    { x:'2025-11-18', y:48.4, m:'Gemini 3 Pro' },
-    { x:'2026-02-19', y:57.2, m:'Gemini 3.1 Pro' },
-    { x:'2026-05-19', y:55.3, m:'Gemini 3.5 Flash' },
+    { x:'2023-12-06', y:8.5,  m:'Gemini 1.0 Pro', cost:.001 },
+    { x:'2024-02-15', y:16.0, m:'Gemini 1.5 Pro', cost:.0025 },
+    { x:'2024-09-24', y:20.6, m:'Gemini 2.5 Flash', cost:.0375 },
+    { x:'2025-03-25', y:34.6, m:'Gemini 2.5 Pro', cost:.0075 },
+    { x:'2025-11-18', y:48.4, m:'Gemini 3 Pro', cost:.025 },
+    { x:'2026-02-19', y:57.2, m:'Gemini 3.1 Pro', cost:.030 },
+    { x:'2026-05-19', y:55.3, m:'Gemini 3.5 Flash', cost:.040 },
   ]},
   claude: { label:'Claude / Anthropic', color:C, pts:[
-    { x:'2024-03-04', y:18.0, m:'Claude 3 Opus' },
-    { x:'2025-05-22', y:33.0, m:'Claude 4 Sonnet' },
-    { x:'2025-08-01', y:36.0, m:'Claude 4.1 Opus' },
-    { x:'2025-11-24', y:43.1, m:'Claude Opus 4.5' },
-    { x:'2025-12-15', y:44.4, m:'Claude Sonnet 4.6' },
-    { x:'2026-01-20', y:46.5, m:'Claude Opus 4.6' },
-    { x:'2026-03-10', y:51.8, m:'Claude Opus 4.7' },
-    { x:'2026-04-15', y:61.4, m:'Claude Opus 4.8' },
-    { x:'2026-06-09', y:64.9, m:'Claude Fable 5' },
+    { x:'2024-03-04', y:18.0, m:'Claude 3 Opus', cost:.015 },
+    { x:'2025-05-22', y:33.0, m:'Claude 4 Sonnet', cost:.003 },
+    { x:'2025-08-01', y:36.0, m:'Claude 4.1 Opus', cost:.015 },
+    { x:'2025-11-24', y:43.1, m:'Claude Opus 4.5', cost:.018 },
+    { x:'2025-12-15', y:44.4, m:'Claude Sonnet 4.6', cost:.003 },
+    { x:'2026-01-20', y:46.5, m:'Claude Opus 4.6', cost:.019 },
+    { x:'2026-03-10', y:51.8, m:'Claude Opus 4.7', cost:.022 },
+    { x:'2026-04-15', y:61.4, m:'Claude Opus 4.8', cost:.025 },
+    { x:'2026-06-09', y:64.9, m:'Claude Fable 5', cost:.008 },
   ]},
 };
 
@@ -175,6 +192,7 @@ function makeDS(d){ return {
 };}
 
 let chart=null;
+let activeChartType='timeline';
 
 // בונה דאטהסטים של קו-זמן (לפי חברה) מתוך נתוני קטגוריה עם תאריכים
 function catDatasets(data){
@@ -186,7 +204,7 @@ function catDatasets(data){
   return [makeDS(grp.gpt), makeDS(grp.gemini), makeDS(grp.claude)];
 }
 
-function renderChart(){
+function renderTimelineChart(){
   const ctx=document.getElementById('chart');
   if(chart){ chart.destroy(); chart=null; }
   // איפוס מצב הכיבוי של צ'יפי המקרא
@@ -226,9 +244,109 @@ function renderChart(){
   }catch(e){ console.error('Chart init failed (CDN?):', e); }
 }
 
+function renderEfficiencyChart(){
+  const ctx=document.getElementById('chart');
+  if(chart){ chart.destroy(); chart=null; }
+  // איפוס מצב הכיבוי של צ'יפי המקרא
+  document.querySelectorAll('.chip[data-i]').forEach(c=>c.classList.remove('off'));
+
+  // אסוף את כל המודלים עם ניקוד ועלות
+  const allModels = [];
+  Object.entries(FAM).forEach(([company, data]) => {
+    data.pts.forEach(pt => {
+      allModels.push({ m:pt.m, y:pt.y, cost:pt.cost, color:data.color, company });
+    });
+  });
+
+  // חישוב יעילות (ניקוד / עלות) וסדר יורד
+  const efficiency = allModels
+    .map(m => ({ ...m, eff:m.y/(m.cost||0.001) }))
+    .sort((a,b) => b.eff - a.eff)
+    .slice(0, 20); // מראה רק את 20 המודלים היעילים ביותר
+
+  const labels = efficiency.map(m => m.m);
+  const values = efficiency.map(m => m.eff);
+  const colors = efficiency.map(m => m.color);
+
+  try{
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'יעילות (Intelligence Index / עלות טוקנים)',
+          data: values,
+          backgroundColor: colors.map(c => c+'cc'),
+          borderColor: colors,
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0e1424',
+            borderColor: css('--border'),
+            borderWidth: 1,
+            padding: 13,
+            titleColor: '#fff',
+            bodyColor: '#e8edf6',
+            callbacks: {
+              label: ctx => {
+                const m = efficiency[ctx.dataIndex];
+                return `ניקוד: ${m.y} | עלות: $${m.cost}/1K | יעילות: ${m.eff.toFixed(0)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,.04)' },
+            ticks: { color: css('--muted') },
+            title: { display: true, text: 'יעילות (ניקוד / עלות)', color: css('--muted') }
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,.04)' },
+            ticks: { color: css('--muted') }
+          }
+        }
+      }
+    });
+  }catch(e){ console.error('Efficiency chart failed:', e); }
+}
+
+function renderChart(){
+  if(activeChartType === 'timeline'){
+    renderTimelineChart();
+  } else {
+    renderEfficiencyChart();
+  }
+}
+
+document.querySelectorAll('.chart-tab').forEach(tab=>{
+  tab.addEventListener('click', () => {
+    activeChartType = tab.dataset.chart;
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.toggle('active', t===tab));
+    // החבא את דירוג מלא כשמצב יעילות פעיל
+    const rankingElements = document.querySelectorAll('.ranking-section');
+    rankingElements.forEach(el => {
+      if(activeChartType === 'efficiency'){
+        el.classList.add('hidden');
+      } else {
+        el.classList.remove('hidden');
+      }
+    });
+    renderChart();
+  });
+});
+
 document.querySelectorAll('.chip[data-i]').forEach(chip=>{
   chip.addEventListener('click',()=>{
-    if(!chart) return;
+    if(!chart || activeChartType !== 'timeline') return;
     const i=+chip.dataset.i;
     chart.setDatasetVisibility(i,!chart.isDatasetVisible(i));
     chip.classList.toggle('off',!chart.isDatasetVisible(i));
